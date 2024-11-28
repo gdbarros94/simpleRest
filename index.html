@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Demonstration</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        #output {
+            margin-top: 20px;
+        }
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>API Demonstration</h1>
+    <button onclick="fetchData('all')">Get All Data</button>
+    <button onclick="fetchData('users')">Get Users</button>
+    <button onclick="fetchData('products')">Get Products</button>
+
+    <div id="output"></div>
+
+    <script>
+        const apiUrl = "https://rest.alunostds.dev.br/api.php";
+
+        function fetchData(endpoint) {
+            fetch(`${apiUrl}?endpoint=${endpoint}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    displayData(data, endpoint);
+                })
+                .catch(error => {
+                    console.error('Error fetching data:', error);
+                    document.getElementById('output').innerHTML = `<p class="error">Error fetching data: ${error.message}</p>`;
+                });
+        }
+
+        function displayData(data, endpoint) {
+            const output = document.getElementById('output');
+            output.innerHTML = ""; // Limpa o conteúdo anterior
+
+            if (Array.isArray(data)) {
+                // Se for uma lista (e.g., users ou products)
+                createTable(data, output);
+            } else if (typeof data === 'object') {
+                // Se for um objeto (e.g., all endpoint)
+                for (const key in data) {
+                    const section = document.createElement('div');
+                    section.innerHTML = `<h2>${key.charAt(0).toUpperCase() + key.slice(1)}</h2>`;
+                    output.appendChild(section);
+
+                    if (Array.isArray(data[key])) {
+                        createTable(data[key], section);
+                    } else {
+                        section.innerHTML += `<p>${JSON.stringify(data[key], null, 2)}</p>`;
+                    }
+                }
+            } else {
+                // Caso contrário, exiba como texto bruto
+                output.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            }
+        }
+
+        function createTable(dataArray, container) {
+            const table = document.createElement('table');
+            const thead = document.createElement('thead');
+            const tbody = document.createElement('tbody');
+
+            // Cria o cabeçalho da tabela com base nas chaves do primeiro objeto
+            const headers = Object.keys(dataArray[0]);
+            const headerRow = document.createElement('tr');
+            headers.forEach(header => {
+                const th = document.createElement('th');
+                th.textContent = header.charAt(0).toUpperCase() + header.slice(1);
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+
+            // Cria as linhas da tabela
+            dataArray.forEach(item => {
+                const row = document.createElement('tr');
+                headers.forEach(header => {
+                    const td = document.createElement('td');
+                    td.textContent = item[header];
+                    row.appendChild(td);
+                });
+                tbody.appendChild(row);
+            });
+
+            table.appendChild(thead);
+            table.appendChild(tbody);
+            container.appendChild(table);
+        }
+    </script>
+</body>
+</html>
